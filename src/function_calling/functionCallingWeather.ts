@@ -5,7 +5,6 @@ import { HumanMessage, AIMessage, ToolMessage } from "@langchain/core/messages";
 
 // 定义模拟获取天气数据的函数
 async function getCurrentWeather(location: string, unit: string = "celsius") {
-  // 这是一个模拟函数，实际应用中会调用天气API
   console.log(`正在为 ${location} 获取天气信息...`);
   if (location.toLowerCase().includes("beijing")) {
     return JSON.stringify({ location: "Beijing", temperature: "10", unit: unit, forecast: "sunny" });
@@ -16,7 +15,7 @@ async function getCurrentWeather(location: string, unit: string = "celsius") {
   }
 }
 
-// 定义 getCurrentWeather 工具的结构
+// 定义 getCurrentWeather tool的结构
 const getCurrentWeatherTool = {
   name: "getCurrentWeather",
   description: "Get the current weather in a given location",
@@ -25,7 +24,7 @@ const getCurrentWeatherTool = {
     properties: {
       location: {
         type: "string" as const,
-        description: "The city and state, e.g. San Francisco, CA",
+        description: "The city name, e.g. beijing",
       },
       unit: { type: "string" as const, enum: ["celsius", "fahrenheit"] },
     },
@@ -33,19 +32,11 @@ const getCurrentWeatherTool = {
   },
 };
 
-// 定义工具描述，供LLM理解和调用
-const tool_definitions = [
-  {
-    type: "function" as const,
-    function: getCurrentWeatherTool
-  }
-];
-
 async function main() {
   const modelType = process.env.MODEL_TYPE || 'qwen'; // 默认为qwen
   let modelName, openAIApiKey, baseURL;
 
-  // 根据模型类型设置API密钥和基础URL (与index.ts类似)
+  // 选择LLM模型
   if (modelType === 'qwen') {
     modelName = "qwen-plus";
     openAIApiKey = process.env.QWEN_API_KEY;
@@ -80,12 +71,17 @@ async function main() {
       baseURL: baseURL
     }
   }).bind({
-    tools: tool_definitions,
-    // tool_choice: { type: "function", function: { name: "getCurrentWeather" } }, // 可以强制调用特定工具
+    tools: [
+      {
+        type: "function" as const,
+        function: getCurrentWeatherTool
+      }
+    ],
+    tool_choice: "auto"
   });
 
   try {
-    const userInput = "What's the weather like in Beijing?";
+    const userInput = "What's the weather like in shanghai?";
     console.log(`用户: ${userInput}`);
     
     // 第一次调用，LLM可能会返回一个工具调用请求
@@ -93,7 +89,6 @@ async function main() {
     console.log("LLM 首次响应:", first_response);
 
     // 检查LLM是否请求调用工具
-    // LangChain v0.1+ uses `tool_calls` on AIMessage
     if (first_response.tool_calls && first_response.tool_calls.length > 0) {
       const toolCalls = first_response.tool_calls;
       const toolMessages: ToolMessage[] = [];
@@ -130,14 +125,13 @@ async function main() {
       }
 
       // 将工具执行结果返回给LLM
-      console.log("向LLM发送工具结果:", toolMessages.map(tm => ({id: tm.tool_call_id, content: tm.content })));
+      console.log("向LLM发送工具结果:", toolMessages.map(tm => ({ tool_call_id: tm.tool_call_id, content: tm.content })));
       const final_response = await model.invoke([
         new HumanMessage(userInput),
-        first_response, // The AI message that included the tool_calls
+        first_response,     // The AI message that included the tool_calls，不能丢，LLM没有保留记忆的能力 
         ...toolMessages     // Spread the array of ToolMessage objects
       ]);
-      console.log(`LLM 基于工具结果的最终响应: ${final_response.content}`);
-
+      console.log(`LLM 基于Function Calling的最终响应: ${final_response.content}`);
     } else {
       // 如果LLM没有请求工具调用，直接输出其回复
       console.log(`LLM 最终响应: ${first_response.content}`);
