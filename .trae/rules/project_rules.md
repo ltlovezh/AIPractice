@@ -1,10 +1,12 @@
 # 语言与框架
 ## 编程语言
 - TypeScript
+
 ## 框架
 ### 前端框架
 - React
 - Next.js
+
 ### LLM应用开发框架
 - LangChain
 - LangGraph
@@ -16,4 +18,8 @@
 - 常量名：全大写
 ## 注释
 - 中文注释
+
+# 开发规范
+- 使用context7，保证使用最新代码
+
 

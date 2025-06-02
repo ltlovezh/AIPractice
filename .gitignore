@@ -9,3 +9,6 @@ build/
 
 # macOS specific
 .DS_Store
+
+# Fornax
+log/
