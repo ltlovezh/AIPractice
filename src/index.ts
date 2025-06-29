@@ -1,4 +1,6 @@
-// 使用LangChain与LLM交互的Hello World示例
+/**
+ * 使用LangChain与LLM交互的Hello World示例
+ */
 import 'dotenv/config';
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
