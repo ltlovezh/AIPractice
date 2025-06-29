@@ -24,8 +24,13 @@ async function main() {
     openAIApiKey = process.env.DOUBAO_API_KEY;
     baseURL = process.env.DOUBAO_BASE_URL;
     console.log("使用豆包模型");
+  } else if (modelType === 'OpenRouter') {
+    modelName = "google/gemini-2.5-pro"; 
+    openAIApiKey = process.env.OPENROUTER_API_KEY;
+    baseURL = process.env.OPENROUTER_BASE_URL;
+    console.log("使用OpenRouter");
   } else {
-    console.error("无效的模型类型指定. 请在 .env 文件中设置 MODEL_TYPE 为 'qwen', 'deepseek' 或 'doubao'.");
+    console.error("无效的模型类型指定. 请在 .env 文件中设置 MODEL_TYPE 为 'qwen', 'deepseek','doubao'或'OpenRouter'.");
     return;
   }
 
